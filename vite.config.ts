@@ -9,5 +9,5 @@ export default defineConfig({
     strictPort: true,
     host: true,
 //    origin: "/",
-   }
+  }
 })

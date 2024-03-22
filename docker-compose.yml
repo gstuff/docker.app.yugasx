@@ -7,3 +7,5 @@ services:
       - 8081:8080
       # context: ./dir
       # dockerfile: Dockerfile-alternate
+    volumes:
+      - ./src/crons:/crons
