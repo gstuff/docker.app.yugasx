@@ -10,74 +10,72 @@ fi
 
 log "Running Get Stocks: $1"
 
-
-extract_datapoints(){
-    echo $1 | pup 'div.eYanAe > div.gyFHrc text{}' | jq -R '[inputs]'
-}
-
-extract_name(){
-    echo $1 | pup 'div[role="heading"].zzDege text{}'
-}
-
-extract_datecurrencyexchange(){    
-    raw_data__=$(echo $1| pup 'div[jsname="Vebqub"].ygUjEc text{}')
-    raw_data__="${raw_data__//·/|}"
-    clean_string=$(echo "$raw_data__" | sed 's/[^[:print:]]//g')    
-    OLD_IFS=$IFS
-    # Set IFS to the pipe character
-    IFS="|"
-    # Split the string into an array
-    read -ra parts <<< "$clean_string"
-
-    output__=""
-    for part in "${parts[@]}"; do
-        trimmed_string="${part#"${part%%[![:space:]]*}"}"
-        trimmed_string="${trimmed_string%"${trimmed_string##*[![:space:]]}"}"        
-        output__+="$trimmed_string|"        
-    done  
-    echo "$output__"
-}
-
-extract_price(){
-    stock_price=$(echo "$1" | pup 'div[class="YMlKec fxKbKc"] text{}' | sed 's/[$,]//g')
-    echo $stock_price
-}
-
-convert_to_json() {        
-    local -n assoc_array="$1"    
-    listNumericKeys=("PRICE" "VALUE" "COST")
-    json_string="{"
-    for key in "${!assoc_array[@]}"; do
-        case "${listNumericKeys[@]}" in
-        *"$key"*)
-            json_string+="\"$key\":${assoc_array[$key]},"
-            ;;
-        *)
-            json_string+="\"$key\":\"${assoc_array[$key]}\","
-            ;;
-        esac        
-    done
-    json_string+="}"
-
-    echo "$json_string"
-}
-
 # symbol="$1"
 # scraped_data=$(scrape_google_finance "$symbol")
 scraped_data=$(cat ./data/ar3.asx)
 # Declare an associative array
 declare -A stock
 if [ $? -eq 0 ]; then
-    stock[NAME]=$(extract_name "$scraped_data")    
-    stock[PRICE]=$(extract_price "$scraped_data")    
     
+    stock[NAME]=$(extract_name "$scraped_data")    
+    stock[PRICE]=$(extract_price "$scraped_data")            
     stock_raw_datecurrencyexchange=$(extract_datecurrencyexchange "$scraped_data")        
     stock[DATETIME]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f1)
     stock[CURRENCY]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f2)
-    stock[EXCHANGE]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f3)    
+    stock[EXCHANGE]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f3)            
+    extracted_datapoints_string=$(extract_datapoints "$scraped_data")    
     
-    json=$(convert_to_json stock)    
-    echo "$json"
+    # declare -a datapoints
+    # IFS='|' read -r -a datapoints <<< "$extracted_datapoints_string"    
+    target="previous close"
+    echo $(extract_datapoint "$target" "$extracted_datapoints_string" "numeric")
+    
+    # index=$(printf "%s\n" "${datapoints[@]}" | grep -in -m 1 "$target" | cut -d: -f1)
+    # if [ -n "$index" ]; then
+    #     index=$((index - 1))        
+    #     echo "$target $index: ${datapoints[((index + 1))]}"
+    # fi
+    
+    # target="day range"
+    # index=$(printf "%s\n" "${datapoints[@]}" | grep -in -m 1 "$target" | cut -d: -f1)
+    # if [ -n "$index" ]; then
+    #     index=$((index - 1))        
+    #     echo "$target $index: ${datapoints[((index + 1))]}"
+    # fi
+
+    # rtn_array=$(extract_datapoints "$scraped_data")
+    # echo $rtn_array
+#     IFS=$'\n' read -r -d '' -a datapoints <<<"$rtn_array"
+# for element in "${datapoints[@]}"; do
+#     echo "Element: $element"
+# done
+
+    # stock_raw_datapoints=$(extract_datapoints "$scraped_data" datpoints)        
+    # array_length=${#stock_raw_datapoints[@]}
+    # echo "Length of the array: $array_length"
+    # while IFS= read -r line; do
+    #     echo "Line: $line"        
+    # done <<< "$stock_raw_datapoints"
+
+    # target="Previous close"    
+    # index=$(printf "%s\n" "${stock_raw_datapoints[@]}" | grep -i -n -m 1 "$target" | cut -d: -f1)
+
+    # if [ -n "$index" ]; then
+    #     echo "Index of '$target' : $((index - 1))"        
+    #     echo "${stock_raw_datapoints[$index]}"
+    # else
+    #     echo "'$target' not found in the array."
+    # fi
+    # for ((i = 0; i < ${#stock_raw_datapoints[@]}; i++)); do
+    #     echo "Element at index $i: ${stock_raw_datapoints[$i]}"
+    # # Perform actions with each element here
+    # done
+
+
+    
+    
+    #json=$(convert_to_json stock)    
+    #echo "$json"
 
 
     # datapoints_raw=$(extract_datapoints "$scraped_data")
