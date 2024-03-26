@@ -9,3 +9,4 @@ services:
       # dockerfile: Dockerfile-alternate
     volumes:
       - ./src/crons:/crons
+      - ./public:/app/public

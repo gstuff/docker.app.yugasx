@@ -65,7 +65,7 @@ extract_datapoints(){
 extract_datapoint(){    
     declare -a datapoints
     IFS='|' read -r -a datapoints <<< "$2"
-    index=$(printf "%s\n" "${datapoints[@]}" | grep -in -m 1 "$target" | cut -d: -f1)
+    index=$(printf "%s\n" "${datapoints[@]}" | grep -in -m 1 "$1" | cut -d: -f1)
     if [ -n "$index" ]; then
         index=$((index - 1))
         result=${datapoints[((index + 1))]}        
@@ -90,7 +90,7 @@ convert_2_numeric(){
 
 convert_to_json() {        
     local -n assoc_array="$1"    
-    listNumericKeys=("PRICE" "VALUE" "COST")
+    listNumericKeys=("PRICE" "VALUE" "COST","PREVIOUS_CLOSE","DAY_RANGE_MIN","DAY_RANGE_MAX","YEAR_RANGE_MIN","YEAR_RANGE_MAX","RESPONSE_CODE","PRICE_MOVE")
     json_string="{"
     for key in "${!assoc_array[@]}"; do
         case "${listNumericKeys[@]}" in

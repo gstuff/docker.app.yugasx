@@ -3,7 +3,7 @@ FROM node:21
 # RUN apk update && apk upgrade --no-cache
 # RUN apk add nano pup
 RUN apt update && apt upgrade -y
-RUN apt jq pup -y
+RUN apt install jq pup -y
 
 WORKDIR /app
 
