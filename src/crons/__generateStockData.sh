@@ -14,7 +14,7 @@ generate_stock_data(){
 
     log "Generating Stock Data: $1"
     symbol="$1"
-    #scraped_data=$(cat /app/public/data/__$symbol)
+    # scraped_data=$(cat /app/public/data/__$symbol)
     scraped_data=$(scrape_google_finance "$symbol")    
     log "Saving /app/public/data/__$symbol"
     echo "$scraped_data" > /app/public/data/__$symbol
