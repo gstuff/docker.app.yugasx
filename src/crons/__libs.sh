@@ -1,6 +1,6 @@
 #! /bin/bash
 log(){        
-    lgfle="./logs/$(TZ='Australia/Sydney' date '+%Y%m%d').log"    
+    lgfle="/crons/logs/$(TZ='Australia/Sydney' date '+%Y%m%d').log"    
     echo "$(TZ='Australia/Sydney' date '+%H:%M:%S'):    $1" >> $lgfle
 }
 
@@ -84,7 +84,10 @@ extract_price(){
 }
 
 convert_2_numeric(){    
-    output_string=$(echo "$1" | sed 's/[^0-9.]//g')    
+    string_value=$1
+    string_value=${string_value:-"0"}
+    output_string=$(echo "$string_value" | sed 's/[^0-9.]//g')
+
     echo $output_string
 }
 
