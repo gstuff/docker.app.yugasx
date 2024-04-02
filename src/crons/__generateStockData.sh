@@ -1,28 +1,33 @@
 #! /bin/bash
-source ./__libs.sh
+source /crons/__libs.sh
 
 generate_stock_data(){
     declare -A stock
     stock[RESPONSE_CODE]=1
     stock[RESPONSE_MESSAGE]=""        
 
-    if [ $# -ne 1 ]; then
-        echo "Usage: $0 <SYMBOL>"    
-        log "<SYMBOL> not passed"
+    if [ $# -ne 2 ]; then
+        echo "Usage: $0 <SYMBOL> $1 <USE_CACHE>"    
+        log "<SYMBOL> not passed and/or <USE_CACHE> not passed"
         exit 1
+    fi                
+    symbol="$1"
+    use_cache=$2
+    log "Generating Stock Data: $symbol >> Use Cache ($use_cache)"
+    if [ "$use_cache" = true ]; then
+        scraped_data=$(cat /app/public/data/__$symbol)
+    else
+        scraped_data=$(scrape_google_finance "$symbol")    
+        log "Saving /app/public/data/__$symbol"
+        echo "$scraped_data" > /app/public/data/__$symbol
     fi
 
-    log "Generating Stock Data: $1"
-    symbol="$1"
-    #scraped_data=$(cat /app/public/data/__$symbol)
-    scraped_data=$(scrape_google_finance "$symbol")    
-    log "Saving /app/public/data/__$symbol"
-    echo "$scraped_data" > /app/public/data/__$symbol
-    
     if [ $? -eq 0 ]; then        
+        stock[SYMBOL]=$(echo "$symbol" | tr '[:lower:]' '[:upper:]')
         stock[NAME]=$(extract_name "$scraped_data")            
         price=$(extract_price "$scraped_data")
-        stock[PRICE]=$price        
+        stock[PRICE]=$price
+
         stock_raw_datecurrencyexchange=$(extract_datecurrencyexchange "$scraped_data")        
         stock[DATETIME]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f1)
         stock[CURRENCY]=$(echo "$stock_raw_datecurrencyexchange" | cut -d'|' -f2)
@@ -51,6 +56,7 @@ generate_stock_data(){
         price_move_perc=$(awk -v n1="$price_move" -v n2="$previous_close" 'BEGIN {printf "%.2f", n1 / n2 * 100}')    
         stock[PRICE_MOVE]=$price_move    
         stock[PRICE_MOVE_PERC]=$price_move_perc            
+
     else
         stock[RESPONSE_CODE]=0
         stock[RESPONSE_MESSAGE]="Failed to scrape Google Finance data for $symbol."        
