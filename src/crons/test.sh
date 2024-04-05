@@ -1,20 +1,49 @@
 #! /bin/bash
-source ./__libs.sh
-source ./__generateStockData.sh
+# source ./__libs.sh
+# source ./__generateStockData.sh
 
-declare -A stocks
+# declare -A stocks
  
-stocks[ar3.asx]='{"price":10}'
-stocks[ivv.asx]='{"price":11}'
+# stocks[ar3.asx]='{"price":10}'
+# stocks[ivv.asx]='{"price":11}'
 
-# Create an empty JSON object
-json_stocks=$(echo "{}" | jq -c '.')
-for key in "${!stocks[@]}"; do
-    value="${stocks[$key]}"
-    json_stocks=$(echo "$json_stocks" | jq --arg key "$key" --argjson value "$value" '. + {($key): $value}')
-done
+# # Create an empty JSON object
+# json_stocks=$(echo "{}" | jq -c '.')
+# for key in "${!stocks[@]}"; do
+#     value="${stocks[$key]}"
+#     json_stocks=$(echo "$json_stocks" | jq --arg key "$key" --argjson value "$value" '. + {($key): $value}')
+# done
 
-echo "$json_stocks"
+# echo "$json_stocks"
+
+# WebSocket server URL
+WS_URL="ws://localhost:8100"
+# Message to send
+#MESSAGE='{ "type": "message", "channel": "channel1", "content": "Hello, world!" }';
+#DATA_JSON='{ "type": "subscribe", "channel": "asx" }'
+DATA_JSON='{ "type": "message", "channel": "asx", "content": "Hello, world!" }';
+# Send WebSocket message using websocat
+#websocat $WS_URL --text "$MESSAGE"
+echo "$DATA_JSON" | websocat "$WS_URL"
+# RabbitMQ server URL
+# RabbitMQ server URL
+
+# RabbitMQHost='10.79.55.12'
+# RabbitMQUn='guest'
+# RabbitMQPw='iloveguy!'
+# vHost='%2F'
+# name='amq.direct'
+# routing_key='hello'
+# #curl -i -u ${RabbitMQUn}:${RabbitMQPw} "http://${RabbitMQHost}:15672/api/vhosts"
+
+# curl -i -u ${RabbitMQUn}:${RabbitMQPw} http://${RabbitMQHost}:15672/api/queues/%2F/test/bindings
+
+# curl -i -u ${RabbitMQUn}:${RabbitMQPw} -H "Content-Type: application/json" -X POST -d '{"properties":{},"routing_key":"${routing_key}","payload":"Hello, RabbitMQ!","payload_encoding":"string"}' http://${RabbitMQHost}:15672/api/exchanges/${vHost}/${name}/publish
+
+
+
+#'http://10.79.55.12:15672/api/channels?sort=message_stats.publish_details.rate&sort_reverse=true&columns=name,message_stats.publish_details.rate,message_stats.deliver_get_details.rate'
+
 
 
 # stocks[ar3.asx]=$(generate_stock_data "ar3.asx")
