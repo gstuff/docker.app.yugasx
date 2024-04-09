@@ -1,7 +1,6 @@
 #!/bin/bash
 source /crons/__libs.sh
 source /crons/__generateStockData.sh
-: '
 holdings=$(jq '.' /crons/holdings.conf)
 use_cache="${1:-false}"
 stocks=()
@@ -30,8 +29,25 @@ do
 done
 json_stocks+=']'
 echo "$json_stocks" > /app/public/data/stocks.json
-'
-json_stocks=$(cat /app/public/data/stocks.json)
+
+echo "Sending data to Socket Server"
+WS_URL="ws://host.docker.internal:8100"
+TYPE="message"
+CHANNEL="asx"
+CONTENT=$json_stocks
+DATA_JSON=$(jq --null-input \
+  --arg type "$TYPE" \
+  --arg channel "$CHANNEL" \
+  --arg content "$CONTENT" \
+  '{"type": $type, "channel": $channel, "content": $content}')
+
+# Send WebSocket message using websocat
+#websocat $WS_URL --text "$MESSAGE"
+#echo $DATA_JSON
+echo $DATA_JSON | websocat "$WS_URL"
+
+
+#json_stocks=$(cat /app/public/data/stocks.json)
 # WS_URL="ws://host.docker.internal:8100"
 # DATA_JSON='{ "type": "message", "channel": "asx", "content":[DATA_JS_ARRAY]}';
 # # # Send WebSocket message using websocat
@@ -44,7 +60,7 @@ json_stocks=$(cat /app/public/data/stocks.json)
 
 # # echo $DATA_JSON
 # echo "$DATA_JSON" | websocat "$WS_URL"
-WS_URL="ws://host.docker.internal:8100"
+#WS_URL="ws://host.docker.internal:8100"
 # Message to send
 #MESSAGE='{ "type": "message", "channel": "channel1", "content": "Hello, world!" }';
 #DATA_JSON='{ "type": "subscribe", "channel": "asx" }'
@@ -54,16 +70,3 @@ WS_URL="ws://host.docker.internal:8100"
 #     --arg channel "asx" \
 #     --arg content "${json_stocks}" \
 #     '{ "type": "$type", "channel": "$channel", "content": "Hello World?" }')
-TYPE="message"
-CHANNEL="asx"
-CONTENT=$json_stocks
-DATA_JSON=$(jq --null-input \
-  --arg type "$TYPE" \
-  --arg channel "$CHANNEL" \
-  --arg content "$CONTENT" \
-  '{"type": $type, "channel": $channel, "content": $content}')
-
-# Send WebSocket message using websocat
-#websocat $WS_URL --text "$MESSAGE"
-echo $DATA_JSON
-echo $DATA_JSON | websocat "$WS_URL"

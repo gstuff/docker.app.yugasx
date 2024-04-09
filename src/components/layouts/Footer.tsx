@@ -1,4 +1,4 @@
-import { Container, Group, Anchor } from '@mantine/core';
+import { Container } from '@mantine/core';
 import { IconCode } from '@tabler/icons-react';
 import classes from './Footer.module.css';
 
