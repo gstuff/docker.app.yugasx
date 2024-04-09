@@ -1,9 +1,10 @@
-FROM node:21
+FROM node:21-slim
 
 # RUN apk update && apk upgrade --no-cache
 # RUN apk add nano pup
 RUN apt update && apt upgrade -y
-RUN apt install jq pup golang -y
+RUN apt install jq pup iputils-ping curl -y
+#RUN apt install jq pup golang -y
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 #RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -y

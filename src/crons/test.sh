@@ -17,7 +17,7 @@
 # echo "$json_stocks"
 
 # WebSocket server URL
-WS_URL="ws://localhost:8100"
+WS_URL="ws://host.docker.internal:8100"
 # Message to send
 #MESSAGE='{ "type": "message", "channel": "channel1", "content": "Hello, world!" }';
 #DATA_JSON='{ "type": "subscribe", "channel": "asx" }'
