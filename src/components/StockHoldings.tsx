@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import { Group, Paper, SimpleGrid, Text, Table } from '@mantine/core';
+import { ws } from './ConnectionSockets';
 import cx from 'clsx';
 
 import {
@@ -94,15 +95,16 @@ interface IOverview {
   HOLDINGS_LABEL: string;
 }
 
-
+//const socket_url = 'ws://localhost:8100'
+//const socket_url = 'ws://host.docker.internal:8100';
+//const socket_url = 'ws://socket-server:8100';
 export function StockHoldings() {
   const [stocks, setStocks] = useState<IStock[]>([]);
   const [overviewStatus, setOoverviewStatus] = useState<IOverview[]>([])  
   const [scrolled] = useState(false);
-  //const ws = new WebSocket('ws://socket-server:8100');
-  const ws = new WebSocket('ws://localhost:8100');
-
+  
   function __setStocks(stocks: IStock[]){      
+      console.log(stocks);
       const total_market_value = stocks.reduce((acc:number, stock) => {
         return acc + (stock.PRICE*stock.UNITS);
       },0)
@@ -133,32 +135,39 @@ export function StockHoldings() {
       setOoverviewStatus(ovs);
   }
 
-  function listen2Websocket() {
-//const ws__ = new WebSocket('ws://localhost:8100');
-    ws.onopen = () => {
-      console.log('WebSocket connection opened');
-      ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
-    };
-    // Event listener for receiving messages
-    ws.onmessage = (event) => {
-      console.log("retrieve data from socket");     
-      __setStocks(JSON.parse(event.data));
-    };
+  function setupSocket() {    
+    console.log('Socket setup')
+    ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
+    
+    ws.onmessage = (e: MessageEvent) => {
+      console.log("Message recieved from Socket");             
+      __setStocks(JSON.parse(e.data));
+    }
+    // ws.onopen = () => {    
+    //   ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
+    //   console.log('WebSocket connection opened');
+    // };
+    // // Event listener for receiving messages
+    // ws.onmessage = (event) => {
+    //   console.log("retrieve data from socket");     
+    //   __setStocks(JSON.parse(event.data));
+    // };
 
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
+    // return () => {
+    //   if (ws) {
+    //     ws.close();
+    //   }
+    // };
   }
+
   useEffect(() => {
     fetch("/data/stocks.json?url")
     .then(response => response.json())
     .then(stocks__ => {
       __setStocks(stocks__);
-      listen2Websocket();
-    })
-        
+    }).then(()=>{
+      setupSocket();      
+    });    
   },[]);
   
   

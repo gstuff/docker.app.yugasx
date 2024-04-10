@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Web Page</title>
+<script>
+
+    // Define the WebSocket URL
+    const socketUrl = 'ws:///host.docker.internal:8100';
+        // Create a new WebSocket instance
+        const socket = new WebSocket(socketUrl);
+
+        // Define the onopen event handler
+        socket.onopen = function(event) {
+            socket.send(JSON.stringify({type: 'subscribe',channel:'asx'}))
+            console.log('WebSocket connection opened.');
+            // Optionally, send any initial messages after connection is established
+            // socket.send('Hello from client!');
+        };
+
+        // Define the onmessage event handler
+        socket.onmessage = function(event) {
+            console.log('Message received:', event.data);
+            // Handle incoming messages here
+        };
+
+        // Define the onerror event handler
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+            // Handle any errors here
+        };
+
+        // Define the onclose event handler
+        socket.onclose = function(event) {
+            console.log('WebSocket connection closed.');
+            // Handle connection close event here
+        };
+
+function onPageLoaded() {
+    console.log("Page is loaded");    
+}
+document.addEventListener("DOMContentLoaded", onPageLoaded);    
+</script>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to My Simple Web Page</h1>
+        <p>This is a basic HTML page.</p>
+        <p>You can modify this template to create your own web pages.</p>
+    </div>
+</body>
+</html>

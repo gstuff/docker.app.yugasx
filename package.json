@@ -17,6 +17,7 @@
     "axios": "^1.6.8",
     "blob-to-buffer": "^1.2.9",
     "chokidar": "^3.6.0",
+    "isomorphic-ws": "^5.0.0",
     "rabbitmq-client": "^4.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
