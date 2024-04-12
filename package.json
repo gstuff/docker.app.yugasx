@@ -13,11 +13,18 @@
     "@mantine/core": "^7.7.0",
     "@mantine/hooks": "^7.7.0",
     "@tabler/icons-react": "^3.1.0",
+    "amqplib": "^0.10.3",
     "axios": "^1.6.8",
+    "blob-to-buffer": "^1.2.9",
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "isomorphic-ws": "^5.0.0",
+    "rabbitmq-client": "^4.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/node": "^20.12.7",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
