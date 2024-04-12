@@ -1,110 +1,22 @@
 import {useState, useEffect} from 'react';
 import { Group, Paper, SimpleGrid, Text, Table } from '@mantine/core';
-import { ws } from './ConnectionSockets';
-import cx from 'clsx';
-
-import {
-  IconBuildingBank,
-  IconDiamond,
-  IconRecycle,
-  IconCloudLock,
-  IconArrowsExchange,
-  IconPlane,
-  IconRouter,
-  IconCircleDotted,    
-  IconArrowUpRight,
-  IconArrowDownRight,
-  IconLineDashed,  
-  IconHandGrab,
-  IconCalendarStats,
-  IconClockHour1,  
-} from '@tabler/icons-react';
+import { createWebocket } from './libs/ServicesConnection'
 import classes from './StockHoldings.module.css';
+import cx from 'clsx';
+import { IconBuildingBank, IconDiamond, IconRecycle, IconCloudLock, IconArrowsExchange, IconPlane, IconRouter, IconCircleDotted, IconArrowUpRight, IconArrowDownRight, IconLineDashed, IconHandGrab, IconCalendarStats, IconClockHour1,  } from '@tabler/icons-react';
+const icons = { finance: IconBuildingBank, resources: IconDiamond, renewables: IconRecycle, cybersecurity:IconCloudLock, etf: IconArrowsExchange, transport: IconPlane, telecommunications: IconRouter, null: IconCircleDotted, up: IconArrowUpRight, down: IconArrowDownRight, neutral:IconLineDashed, hold:IconHandGrab, total:IconCalendarStats, today:IconClockHour1 };
+import { getMovementColour, getMovementIcon, currencyFormat, numberFormat } from './libs/Utils'
+import { IStock } from './interfaces/IStock'
+import { IOverview } from './interfaces/IOverview'
 
-const icons = {
-  finance: IconBuildingBank,
-  resources: IconDiamond,
-  renewables: IconRecycle,
-  cybersecurity:IconCloudLock,
-  etf: IconArrowsExchange,
-  transport: IconPlane,
-  telecommunications: IconRouter,
-  null: IconCircleDotted,  
-  up: IconArrowUpRight,
-  down: IconArrowDownRight,
-  neutral:IconLineDashed,
-  hold:IconHandGrab,
-  total:IconCalendarStats,
-  today:IconClockHour1
-};
-
-const getMovementColour = (nv: number | 0) => {
-  return nv == 0 ? 'var(--mantine-color-gray-text)' : nv > 0 ? 'var(--mantine-color-teal-text)' : 'var(--mantine-color-red-text)'  
-}
-const getMovementIcon = (nv: number | 0) => {
-  return nv == 0 ? icons.neutral : nv > 0 ? icons.up : icons.down
-}
-
-const currencyFormat = (nv: number | 0, prec?: number | 2) => {
-  return (nv).toLocaleString('en-AU', {
-    style: 'currency',
-    currency: 'AUD',
-    maximumFractionDigits:prec
-  });   
-}
-
-const numberFormat = (nv: number | 0, prec?: number | 2) => {
-  return (nv).toLocaleString('en-AU', {    
-    maximumFractionDigits:prec
-  });   
-}
-
-interface IStock { 
-  CHANGE_VALUE: number;
-  PROFIT_LOSS_PERC: number; 
-  PROFIT_LOSS: number; 
-  MARKET_VALUE: number; 
-  UNITS: number; 
-  PRICE: number; 
-  PURCHASE_PRICE: number;
-  CATEGORY: string; 
-  PREVIOUS_CLOSE: number;
-  PRICE_MOVE: number; 
-  SYMBOL: string;
-  NAME: string;
-  PRICE_MOVE_PERC: number; 
-  DATETIME: string 
-};
-
-interface IOverview {
-  TODAY_ICON: any;
-  TOTAL_ICON: any;  
-  KEY_TODAY: string;
-  TODAY_LABEL: string;
-  TODAY_PROFIT_LOSS: number;
-  TODAY_COLOR: string;  
-  TODAY_PROFIT_LOSS_PERC: number;  
-  KEY_TOTAL: string;
-  TOTAL_LABEL: string;
-  TOTAL_PROFIT_LOSS: number;
-  TOTAL_COLOR:string;
-  TOTAL_PROFIT_LOSS_PERC: number;  
-  KEY_HOLDINGS: string;
-  HOLDINGS_COSTS: number;
-  HOLDINGS_MARKET_VALUE: number;
-  HOLDINGS_LABEL: string;
-}
-
-//const socket_url = 'ws://localhost:8100'
-//const socket_url = 'ws://host.docker.internal:8100';
-//const socket_url = 'ws://socket-server:8100';
+const ws_url = `ws://${window.location.hostname.toUpperCase()==='LOCALHOST'?'host.docker.internal':window.location.hostname}:8100`;
 export function StockHoldings() {
   const [stocks, setStocks] = useState<IStock[]>([]);
   const [overviewStatus, setOoverviewStatus] = useState<IOverview[]>([])  
   const [scrolled] = useState(false);
-  
+  const ws = createWebocket(ws_url);
+
   function __setStocks(stocks: IStock[]){      
-      console.log(stocks);
       const total_market_value = stocks.reduce((acc:number, stock) => {
         return acc + (stock.PRICE*stock.UNITS);
       },0)
@@ -130,34 +42,22 @@ export function StockHoldings() {
           KEY_HOLDINGS: 'OV_HOLDINGS', HOLDINGS_LABEL: 'Holdings', HOLDINGS_MARKET_VALUE:total_market_value, HOLDINGS_COSTS:total_cost        
       }];
         
-
       setStocks(stocks);
       setOoverviewStatus(ovs);
   }
 
   function setupSocket() {    
-    console.log('Socket setup')
-    ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
+    console.log(`Socket setup: ${ws.url}`);    
+    ws.onopen = () => {
+      console.log('Socket connected');
+      console.log('Send Subscribe');
+      ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
+    }
     
     ws.onmessage = (e: MessageEvent) => {
-      console.log("Message recieved from Socket");             
+      console.log("Socket recieved message");             
       __setStocks(JSON.parse(e.data));
-    }
-    // ws.onopen = () => {    
-    //   ws.send(JSON.stringify({ type: 'subscribe', channel: 'asx' }));
-    //   console.log('WebSocket connection opened');
-    // };
-    // // Event listener for receiving messages
-    // ws.onmessage = (event) => {
-    //   console.log("retrieve data from socket");     
-    //   __setStocks(JSON.parse(event.data));
-    // };
-
-    // return () => {
-    //   if (ws) {
-    //     ws.close();
-    //   }
-    // };
+    }    
   }
 
   useEffect(() => {
@@ -165,9 +65,8 @@ export function StockHoldings() {
     .then(response => response.json())
     .then(stocks__ => {
       __setStocks(stocks__);
-    }).then(()=>{
-      setupSocket();      
     });    
+    setupSocket();    
   },[]);
   
   
@@ -176,8 +75,8 @@ export function StockHoldings() {
     const TodayIcon = getMovementIcon(ov.TODAY_PROFIT_LOSS);
     return(
       <>
-      <Paper withBorder p="md" radius="md" key="today_{index}">
-        <Group justify="space-between" key={"today-$index-heading"}>
+      <Paper withBorder p="md" radius="md" key={ov.KEY_TODAY}>
+        <Group justify="space-between">
           <Text size="xl" className={classes.title}>{ov.TODAY_LABEL}</Text>                              
           <TodayIcon className={classes.icon} size="2.4rem" stroke={2.5} color={ov.TODAY_COLOR} />
           <icons.today className={classes.icon} size="2.4rem"/>
@@ -189,7 +88,7 @@ export function StockHoldings() {
           <Text size="sm" c={ov.TODAY_COLOR}>{Math.round((ov.TODAY_PROFIT_LOSS_PERC + Number.EPSILON) * 100) / 100}%</Text>
         </Group>
       </Paper>
-      <Paper withBorder p="md" radius="md" key="total_{index}">
+      <Paper withBorder p="md" radius="md" key={ov.KEY_TOTAL}>
         <Group justify="space-between">
           <Text size="xl" className={classes.title}>{ov.TOTAL_LABEL}</Text>          
           {/* <ov.TOTAL_ICON className={classes.icon} size="2.4rem" stroke={2.5} color={ov.TOTAL_COLOR} /> */}
@@ -202,7 +101,7 @@ export function StockHoldings() {
           <Text size="sm" c={ov.TOTAL_COLOR}>{Math.round((ov.TOTAL_PROFIT_LOSS_PERC + Number.EPSILON) * 100) / 100}%</Text>
         </Group>
       </Paper>
-      <Paper withBorder p="md" radius="md" key="holding_{index}">
+      <Paper withBorder p="md" radius="md" key={ov.KEY_HOLDINGS}>
         <Group justify="space-between">
           <Text size="xl" className={classes.title}>{ov.HOLDINGS_LABEL}</Text>          
           <icons.hold className={classes.icon} size="2.4rem"/>
@@ -268,33 +167,14 @@ export function StockHoldings() {
         <Table.Td align='right'><Text c={getMovementColour(stock.PRICE_MOVE_PERC)}>{numberFormat(stock.PRICE_MOVE_PERC,2)}</Text></Table.Td>
         <Table.Td align='right'><Text c={getMovementColour(stock.CHANGE_VALUE)}>{numberFormat(stock.CHANGE_VALUE,2)}</Text></Table.Td>
       </Table.Tr>      
-      // <Paper withBorder p="md" radius="md" key={stock.SYMBOL}>
-      //   <Group justify="space-between">
-      //     <Text size="xl" className={classes.title}>{stock.SYMBOL}</Text>          
-      //     <Icon className={classes.icon} size="1.4rem" stroke={2.5} />
-      //   </Group>
-      //   <Group justify="space-between">
-      //     <Text size="sm" c="dimmed">{stock.NAME.replace("&amp;","&")}</Text>      
-      //   </Group>        
-      //   <Group>
-      //     <Text className={classes.value}>{stock.PRICE}</Text>
-      //     <Text c={stock.PRICE_MOVE == 0 ? 'grey' : stock.PRICE_MOVE > 0 ? 'teal' : 'red'} fz="sm" fw={500} className={classes.diff}>
-      //       <span>{stock.PRICE_MOVE_PERC}%</span>
-      //       <DiffIcon size="1rem" stroke={1.5} />
-      //     </Text>
-      //   </Group>        
-      //   <Group justify="space-between" align="flex-end" gap="xs" mt={25}>
-      //     <Text size="xs" c="dimmed">{stock.DATETIME}</Text>        
-      //   </Group>
-      // </Paper>
     );
   });
 
   return (    
     <div className={classes.root}>                  
-      <SimpleGrid cols={{ base: 1, md: 3 }} mb="sm">{overview}</SimpleGrid>
+      <SimpleGrid key="grid_overview" cols={{ base: 1, md: 3 }} mb="sm">{overview}</SimpleGrid>
       
-      <SimpleGrid cols={{ base: 1, md: 4 }}>{holdings}</SimpleGrid>      
+      <SimpleGrid key="grid_holdings" cols={{ base: 1, md: 4 }}>{holdings}</SimpleGrid>      
 
       <Table miw={800} striped={true}>
         <Table.Thead className={cx(classes.header, { [classes.scrolled]: scrolled })}>

@@ -15,9 +15,6 @@ FROM node:16 AS serve-stage
 WORKDIR /www
 COPY --from=build-stage /app/dist .
 
-# # Check if the dist directory is created
-# RUN ls -l /www
-
 RUN npm install -g http-server
 EXPOSE 8080
 CMD ["http-server", "-p", "8080"]
